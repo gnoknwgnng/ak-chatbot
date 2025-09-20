@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Study Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+
+        .notebook-container {
+            background-color: #fcfcf5;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .text-area {
+            background-color: transparent;
+            border: none;
+            outline: none;
+            resize: none;
+            font-size: 1.1rem;
+            line-height: 1.5rem;
+            color: #1a202c;
+            font-family: 'Inter', sans-serif;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+
+        .message-bubble {
+            max-width: 80%;
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.08);
+            position: relative;
+            animation: fadeIn 0.5s ease-out;
+            border: 1px solid #e2e8f0;
+            font-size: 0.95rem;
+        }
+
+        .user-message {
+            background-color: #e5e5e5;
+            align-self: flex-end;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .ai-message {
+            background-color: #f0f0f0;
+            align-self: flex-start;
+            margin-left: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-family: 'Patrick Hand', cursive;
+        }
+
+        #chat-history {
+            padding: 20px;
+        }
+
+        .loading-dots span {
+            animation: dot-pulse 1.2s infinite ease-in-out;
+        }
+
+        .loading-dots span:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .loading-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .loading-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes dot-pulse {
+
+            0%,
+            80%,
+            100% {
+                transform: scale(0);
+            }
+
+            40% {
+                transform: scale(1);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .button-gradient {
+            background-image: linear-gradient(135deg, #a37d65 0%, #b28a71 100%);
+            border: 2px solid #a37d65;
+            transition: all 0.2s ease-in-out;
+            color: white;
+            font-weight: 600;
+        }
+
+        .button-gradient:hover {
+            box-shadow: 0 4px 15px rgba(163, 125, 101, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .clear-btn {
+            background-color: #d1d5db;
+            color: #4b5563;
+        }
+
+        .clear-btn:hover {
+            background-color: #9ca3af;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="notebook-container p-6">
+        <h1 class="text-3xl font-bold text-center text-[#a37d65] mb-6">AI Study Assistant</h1>
+
+        <!-- Chat History -->
+        <div id="chat-history" class="flex-grow overflow-y-auto p-2 mb-4 rounded-lg">
+            <!-- Messages will be injected here -->
+        </div>
+
+        <!-- Options Section -->
+        <div class="p-2 bg-gray-100 rounded-lg mb-2">
+            <!-- Top Row: Response Length and Clear Button -->
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center flex-1 mr-4">
+                    <label for="length-select" class="text-xs font-semibold text-gray-700 mr-2">Length:</label>
+                    <span id="length-value" class="text-xs text-gray-600 w-12 text-center mr-2">Normal</span>
+                    <input type="range" id="length-select" min="1" max="3" value="2"
+                        class="flex-1 h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer">
+                </div>
+                <button id="clear-chat-btn" class="clear-btn py-1 px-3 rounded text-xs font-semibold">
+                    Clear
+                </button>
+            </div>
+            
+            <!-- Bottom Row: Action Buttons -->
+            <div class="grid grid-cols-3 gap-2">
+                <button id="direct-answer-btn" class="button-gradient py-1 px-2 rounded text-xs">
+                    Direct
+                </button>
+                <button id="quiz-btn" class="button-gradient py-1 px-2 rounded text-xs">
+                    Quiz
+                </button>
+                <button id="easy-mode-toggle" class="button-gradient py-1 px-2 rounded text-xs"
+                    data-active="false">
+                    Easy: OFF
+                </button>
+            </div>
+        </div>
+
+        <!-- Input and Send Button -->
+        <div class="flex items-center space-x-2">
+            <textarea id="user-input" rows="1"
+                class="text-area flex-grow p-4 rounded-lg border-2 border-gray-300 focus:border-gray-500 transition-colors"
+                placeholder="Type your message..."></textarea>
+            <button id="send-btn"
+                class="bg-[#a37d65] text-white p-3 rounded-lg shadow-lg hover:bg-[#8e6b5a] transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+                    <path
+                        d="M3.478 2.405a.75.75 0 01.087 1.254l5.346 5.346a.75.75 0 01-1.06 1.06L2.405 3.565a.75.75 0 011.06-1.06zM12.75 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM19.125 18.067a.75.75 0 011.061-.087l5.346-5.346a.75.75 0 011.06 1.06l-5.346 5.346a.75.75 0 01-.087-1.06zM3.478 21.595a.75.75 0 01.087-1.254l5.346-5.346a.75.75 0 011.06 1.06l-5.346 5.346a.75.75 0 01-1.06-1.06zM21.595 3.478a.75.75 0 01-1.254-.087l-5.346-5.346a.75.75 0 01-1.06 1.06l5.346 5.346a.75.75 0 01.087-1.06z" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const chatHistoryEl = document.getElementById('chat-history');
+        const userInputEl = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const lengthSelectEl = document.getElementById('length-select');
+        const lengthValueEl = document.getElementById('length-value');
+        const directAnswerBtn = document.getElementById('direct-answer-btn');
+        const quizBtn = document.getElementById('quiz-btn');
+        const easyModeToggle = document.getElementById('easy-mode-toggle');
+        const clearChatBtn = document.getElementById('clear-chat-btn');
+
+        let chatHistory = [];
+        let isFetching = false;
+
+        const createMessageBubble = (text, sender) => {
+            const bubble = document.createElement('div');
+            bubble.innerHTML = text.replace(/\n/g, '<br>');
+            bubble.classList.add('message-bubble', 'mb-2');
+
+            if (sender === 'user') {
+                bubble.classList.add('user-message', 'ml-auto');
+            } else {
+                bubble.classList.add('ai-message');
+            }
+
+            chatHistoryEl.appendChild(bubble);
+            chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
+        };
+
+        const saveChatHistory = () => {
+            localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+        };
+
+        const loadChatHistory = () => {
+            const saved = localStorage.getItem('chatHistory');
+            if (saved) {
+                chatHistory = JSON.parse(saved);
+                displayChatHistory();
+            }
+        };
+
+        const displayChatHistory = () => {
+            chatHistoryEl.innerHTML = '';
+            chatHistory.forEach(message => createMessageBubble(message.text, message.sender));
+        };
+
+        const showLoadingIndicator = () => {
+            const loadingBubble = document.createElement('div');
+            loadingBubble.classList.add('message-bubble', 'ai-message', 'loading-dots');
+            loadingBubble.innerHTML = `<span>.</span><span>.</span><span>.</span>`;
+            chatHistoryEl.appendChild(loadingBubble);
+            chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
+        };
+
+        const hideLoadingIndicator = () => {
+            const loadingBubble = chatHistoryEl.querySelector('.loading-dots');
+            if (loadingBubble) {
+                chatHistoryEl.removeChild(loadingBubble);
+            }
+        };
+
+        const callAPI = async (userPrompt, systemInstruction, temperature) => {
+            if (isFetching) return;
+            isFetching = true;
+            showLoadingIndicator();
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: userPrompt,
+                        systemInstruction: systemInstruction,
+                        temperature: temperature
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                const aiText = result.reply;
+
+                chatHistory.push({ sender: 'ai', text: aiText });
+                saveChatHistory();
+                hideLoadingIndicator();
+                createMessageBubble(aiText, 'ai');
+
+            } catch (error) {
+                console.error('API call failed:', error);
+                hideLoadingIndicator();
+                createMessageBubble('Sorry, I encountered an error. Please try again.', 'ai');
+            } finally {
+                isFetching = false;
+            }
+        };
+
+        const sendMessage = async (mode = 'normal') => {
+            const prompt = userInputEl.value.trim();
+            if (prompt === '' || isFetching) return;
+
+            const responseLength = lengthSelectEl.value;
+            const isEasyMode = easyModeToggle.getAttribute('data-active') === 'true';
+
+            // Add user message to history
+            chatHistory.push({ sender: 'user', text: prompt });
+            createMessageBubble(prompt, 'user');
+            saveChatHistory();
+            userInputEl.value = '';
+
+            let systemInstruction = 'You are a helpful AI study assistant.';
+            let temperature = 0.7;
+
+            if (isEasyMode) {
+                systemInstruction += ' Explain all concepts in simple, easy-to-understand language for a beginner. Avoid jargon.';
+            }
+
+            switch (mode) {
+                case 'direct':
+                    systemInstruction += ' Provide a very short, direct, and concise answer. Do not elaborate.';
+                    temperature = 0.3;
+                    break;
+                case 'quiz':
+                    systemInstruction += ' Generate a quiz with at least 3 questions based on the topic discussed. Format it clearly with numbered questions and provide an answer key at the end. After the quiz and answers, always add this message: "💡 Want to create interactive quizzes for free? Visit our website: https://quiz-making-by-akdk.vercel.app/ to make engaging quizzes with advanced features!"';
+                    break;
+                case 'normal':
+                    if (responseLength === '1') {
+                        systemInstruction += ' Your response should be brief, a few sentences at most.';
+                        temperature = 0.5;
+                    } else if (responseLength === '3') {
+                        systemInstruction += ' Your response should be very detailed and comprehensive with thorough explanations.';
+                        temperature = 0.8;
+                    }
+                    break;
+            }
+
+            await callAPI(prompt, systemInstruction, temperature);
+        };
+
+        // Event Listeners
+        sendBtn.addEventListener('click', () => sendMessage('normal'));
+        userInputEl.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage('normal');
+            }
+        });
+
+        lengthSelectEl.addEventListener('input', () => {
+            const value = lengthSelectEl.value;
+            let label = '';
+            switch (value) {
+                case '1':
+                    label = 'Short';
+                    break;
+                case '2':
+                    label = 'Normal';
+                    break;
+                case '3':
+                    label = 'Detailed';
+                    break;
+            }
+            lengthValueEl.textContent = label;
+        });
+
+        directAnswerBtn.addEventListener('click', () => sendMessage('direct'));
+        quizBtn.addEventListener('click', () => sendMessage('quiz'));
+
+        easyModeToggle.addEventListener('click', () => {
+            const isActive = easyModeToggle.getAttribute('data-active') === 'true';
+            easyModeToggle.setAttribute('data-active', !isActive);
+            easyModeToggle.textContent = `Easy Mode: ${!isActive ? 'ON' : 'OFF'}`;
+        });
+
+        clearChatBtn.addEventListener('click', () => {
+            localStorage.removeItem('chatHistory');
+            chatHistory = [];
+            displayChatHistory();
+        });
+
+        // Initialize the app
+        window.onload = loadChatHistory;
+    </script>
+</body>
+
+</html>

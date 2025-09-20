@@ -1,0 +1,15 @@
+{
+  "name": "ai-study-assistant",
+  "version": "1.0.0",
+  "description": "Simple AI Study Assistant",
+  "main": "index.html",
+  "scripts": {
+    "build": "echo 'Build complete'"
+  },
+  "dependencies": {
+    "groq-sdk": "^0.3.3"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}
