@@ -1,7 +1,7 @@
 {
   "name": "ai-study-assistant",
   "version": "1.0.0",
-  "description": "Simple AI Study Assistant",
+  "description": "AI Study Assistant for Netlify",
   "main": "index.html",
   "scripts": {
     "build": "echo 'Build complete'"
@@ -10,6 +10,6 @@
     "groq-sdk": "^0.3.3"
   },
   "engines": {
-    "node": "18.x"
+    "node": "18"
   }
 }
