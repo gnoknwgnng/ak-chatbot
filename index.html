@@ -260,6 +260,12 @@
             showLoadingIndicator();
 
             try {
+                console.log('Sending request to /api/chat with:', {
+                    message: userPrompt,
+                    systemInstruction: systemInstruction,
+                    temperature: temperature
+                });
+                
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: {
@@ -272,11 +278,17 @@
                     })
                 });
 
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    const errorText = await response.text();
+                    console.error('Error response:', errorText);
+                    throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
                 }
 
                 const result = await response.json();
+                console.log('API result:', result);
                 const aiText = result.reply;
 
                 chatHistory.push({ sender: 'ai', text: aiText });

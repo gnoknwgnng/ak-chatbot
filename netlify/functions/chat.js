@@ -25,6 +25,10 @@ exports.handler = async (event, context) => {
   }
 
   try {
+    console.log('Event:', JSON.stringify(event, null, 2));
+    console.log('Environment variables:', Object.keys(process.env));
+    console.log('GROQ_API_KEY exists:', !!process.env.GROQ_API_KEY);
+    
     const { message, systemInstruction, temperature } = JSON.parse(event.body);
 
     if (!message) {
@@ -32,6 +36,14 @@ exports.handler = async (event, context) => {
         statusCode: 400,
         headers,
         body: JSON.stringify({ error: 'Message is required' }),
+      };
+    }
+
+    if (!process.env.GROQ_API_KEY) {
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ error: 'GROQ_API_KEY environment variable is not set' }),
       };
     }
 
