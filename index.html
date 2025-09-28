@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Study Assistant</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📚</text></svg>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+        .notebook-container {
+            background-color: #fcfcf5;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .text-area {
+            background-color: transparent;
+            border: none;
+            outline: none;
+            resize: none;
+            font-size: 1.1rem;
+            line-height: 1.5rem;
+            color: #1a202c;
+            font-family: 'Inter', sans-serif;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .message-bubble {
+            max-width: 80%;
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 2px 4px -1px rgba(0,0,0,0.08);
+            position: relative;
+            animation: fadeIn 0.5s ease-out;
+            border: 1px solid #e2e8f0;
+            font-size: 0.95rem;
+        }
+        .user-message {
+            background-color: #e5e5e5;
+            align-self: flex-end;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        .ai-message {
+            background-color: #f0f0f0;
+            align-self: flex-start;
+            margin-left: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-family: 'Patrick Hand', cursive;
+        }
+        
+        #chat-history {
+            padding: 20px;
+        }
+        
+        .loading-dots span {
+            animation: dot-pulse 1.2s infinite ease-in-out;
+        }
+        .loading-dots span:nth-child(1) { animation-delay: 0s; }
+        .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes dot-pulse {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .button-gradient {
+            background-image: linear-gradient(135deg, #a37d65 0%, #b28a71 100%);
+            border: 2px solid #a37d65;
+            transition: all 0.2s ease-in-out;
+            color: white;
+            font-weight: 600;
+        }
+        .button-gradient:hover {
+            box-shadow: 0 4px 15px rgba(163, 125, 101, 0.4);
+            transform: translateY(-2px);
+        }
+        .clear-btn {
+            background-color: #d1d5db;
+            color: #4b5563;
+        }
+        .clear-btn:hover {
+            background-color: #9ca3af;
+        }
+        
+        /* Auth Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 10px;
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        
+        .auth-container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            width: 100%;
+            background-color: #fcfcf5;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background-color: #f8f4f0;
+            border-right: 1px solid #e2e8f0;
+            padding: 1rem;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        .sidebar.open {
+            display: block;
+        }
+        
+        .history-item {
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            background-color: #ffffff;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            border: 1px solid #e2e8f0;
+            font-size: 0.9rem;
+        }
+        
+        .history-item:hover {
+            background-color: #e2e8f0;
+        }
+        
+        .history-item.active {
+            background-color: #a37d65;
+            color: white;
+        }
+        
+        .toggle-sidebar-btn {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            z-index: 100;
+            background-color: #a37d65;
+            color: white;
+            border: none;
+            border-radius: 0.25rem;
+            padding: 0.5rem;
+            cursor: pointer;
+        }
+        
+        .main-content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        /* Error message */
+        .error-message {
+            color: #e53e3e;
+            background-color: #fed7d7;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem;
+            display: none;
+        }
+        
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            display: none;
+        }
+        
+        /* Welcome message */
+        .welcome-message {
+            text-align: center;
+            padding: 2rem;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="text-white text-xl">Initializing...</div>
+    </div>
+    
+    <!-- Authentication Container -->
+    <div id="auth-container" class="auth-container">
+        <div class="modal-content">
+            <h2 class="text-2xl font-bold text-center text-[#a37d65] mb-6">AI Study Assistant</h2>
+            <div class="mb-4">
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input type="email" id="email" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#a37d65]" placeholder="your@email.com">
+            </div>
+            <div class="mb-4">
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <input type="password" id="password" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#a37d65]" placeholder="••••••••">
+            </div>
+            <div class="flex space-x-2">
+                <button id="login-btn" class="button-gradient py-2 px-4 rounded flex-1">Login</button>
+                <button id="signup-btn" class="button-gradient py-2 px-4 rounded flex-1">Sign Up</button>
+            </div>
+            <div id="auth-error" class="text-red-500 text-sm mt-2 hidden"></div>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="app-container" class="notebook-container" style="display: none;">
+        <div id="error-message" class="error-message"></div>
+        
+        <button id="toggle-sidebar" class="toggle-sidebar-btn">☰ History</button>
+        
+        <div class="main-content">
+            <!-- Sidebar for History -->
+            <div id="sidebar" class="sidebar">
+                <h3 class="font-bold text-lg mb-4 text-[#a37d65]">Chat History</h3>
+                <div id="history-list" class="history-list">
+                    <!-- History items will be populated here -->
+                </div>
+                <button id="new-chat-btn" class="button-gradient py-2 px-4 rounded w-full mt-4">+ New Chat</button>
+            </div>
+            
+            <!-- Chat Container -->
+            <div class="chat-container">
+                <div class="user-info p-4">
+                    <h1 class="text-3xl font-bold text-center text-[#a37d65]">AI Study Assistant</h1>
+                    <div>
+                        <span id="user-email" class="text-sm text-gray-600 mr-4"></span>
+                        <button id="logout-btn" class="text-sm text-gray-600 hover:text-[#a37d65]">Logout</button>
+                    </div>
+                </div>
+
+                <!-- Chat History -->
+                <div id="chat-history" class="flex-grow overflow-y-auto p-2 mb-4 rounded-lg">
+                    <div class="welcome-message">
+                        <h2 class="text-2xl font-bold text-[#a37d65] mb-4">Welcome to AI Study Assistant!</h2>
+                        <p class="mb-4">Ask any study-related questions and I'll help you learn.</p>
+                        <p>Try asking about a topic you're studying, or use the options below to get started.</p>
+                    </div>
+                </div>
+                
+                <!-- Options Section -->
+                <div class="p-4 bg-gray-100 rounded-lg mb-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="flex flex-col items-start">
+                        <label for="length-select" class="text-sm font-semibold text-gray-700">Response Length:</label>
+                        <div class="flex items-center w-full mt-1">
+                            <span id="length-value" class="text-sm text-gray-600 w-12 text-center mr-2">Normal</span>
+                            <input type="range" id="length-select" min="1" max="3" value="2" class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-center">
+                        <button id="direct-answer-btn" class="w-full button-gradient py-2 px-4 rounded-lg shadow-sm">
+                            Direct Answer
+                        </button>
+                    </div>
+                    <div class="flex items-center justify-center">
+                        <button id="quiz-btn" class="w-full button-gradient py-2 px-4 rounded-lg shadow-sm">
+                            Generate Quiz
+                        </button>
+                    </div>
+                    <div class="flex items-center justify-center">
+                        <button id="easy-mode-toggle" class="w-full button-gradient py-2 px-4 rounded-lg shadow-sm" data-active="false">
+                            Easy Mode: OFF
+                        </button>
+                    </div>
+                    <div class="col-span-2 md:col-span-4 flex items-center justify-center">
+                        <button id="clear-chat-btn" class="w-full clear-btn py-2 px-4 rounded-lg shadow-sm font-semibold">
+                            Clear Chat
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Input and Send Button -->
+                <div class="flex items-center space-x-2 p-4">
+                    <textarea id="user-input" rows="1" class="text-area flex-grow p-4 rounded-lg border-2 border-gray-300 focus:border-gray-500 transition-colors" placeholder="Type your message..."></textarea>
+                    <button id="send-btn" class="bg-[#a37d65] text-white p-3 rounded-lg shadow-lg hover:bg-[#8e6b5a] transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+                            <path d="M3.478 2.405a.75.75 0 01.087 1.254l5.346 5.346a.75.75 0 01-1.06 1.06L2.405 3.565a.75.75 0 011.06-1.06zM12.75 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM19.125 18.067a.75.75 0 011.061-.087l5.346-5.346a.75.75 0 011.06 1.06l-5.346 5.346a.75.75 0 01-.087-1.06zM3.478 21.595a.75.75 0 01.087-1.254l5.346-5.346a.75.75 0 011.06 1.06l-5.346 5.346a.75.75 0 01-1.06-1.06zM21.595 3.478a.75.75 0 01-1.254-.087l-5.346-5.346a.75.75 0 01-1.06 1.06l5.346 5.346a.75.75 0 01.087-1.06z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Show loading overlay immediately
+        document.getElementById('loading-overlay').style.display = 'flex';
+        
+        // Load configuration
+        let config;
+        try {
+            // Try to load config from window.appConfig (set by config.js)
+            config = window.appConfig || {
+                // Default configuration with empty values for sensitive data
+                SUPABASE_URL: '',
+                SUPABASE_KEY: '',
+                GROQ_API_KEYS: [],
+                MODEL_NAME: "openai/gpt-oss-120b",
+                DEFAULT_TEMPERATURE: 0.7,
+                MAX_CHAT_HISTORY: 10,
+                MAX_COMPLETION_TOKENS: 8192,
+                temperatures: {
+                    direct: 0.1,
+                    short: 0.4,
+                    normal: 0.5,
+                    detailed: 0.8
+                },
+                systemInstructions: {
+                    base: "You are an AI Study Assistant designed to help students learn. Provide accurate, helpful, and educational responses.",
+                    easyMode: "Explain all concepts in simple, easy-to-understand language for a beginner. Avoid jargon.",
+                    direct: "Provide a very short, direct, and concise answer. Do not elaborate.",
+                    quiz: "Generate a quiz with at least 3 questions based on the provided conversation history. Format it clearly with numbered questions and an answer key at the end.",
+                    short: "Your response should be brief, a few sentences at most.",
+                    detailed: "Your response should be very detailed and long, with comprehensive explanations."
+                }
+            };
+        } catch (e) {
+            console.error('Error loading configuration:', e);
+            // Fallback to default configuration
+            config = {
+                SUPABASE_URL: '',
+                SUPABASE_KEY: '',
+                GROQ_API_KEYS: [],
+                MODEL_NAME: "openai/gpt-oss-120b",
+                DEFAULT_TEMPERATURE: 0.7,
+                MAX_CHAT_HISTORY: 10,
+                MAX_COMPLETION_TOKENS: 8192,
+                temperatures: {
+                    direct: 0.1,
+                    short: 0.4,
+                    normal: 0.5,
+                    detailed: 0.8
+                },
+                systemInstructions: {
+                    base: "You are an AI Study Assistant designed to help students learn. Provide accurate, helpful, and educational responses.",
+                    easyMode: "Explain all concepts in simple, easy-to-understand language for a beginner. Avoid jargon.",
+                    direct: "Provide a very short, direct, and concise answer. Do not elaborate.",
+                    quiz: "Generate a quiz with at least 3 questions based on the provided conversation history. Format it clearly with numbered questions and an answer key at the end.",
+                    short: "Your response should be brief, a few sentences at most.",
+                    detailed: "Your response should be very detailed and long, with comprehensive explanations."
+                }
+            };
+        }
+        
+        // DOM Elements
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const authContainer = document.getElementById('auth-container');
+        const appContainer = document.getElementById('app-container');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const loginBtn = document.getElementById('login-btn');
+        const signupBtn = document.getElementById('signup-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const authError = document.getElementById('auth-error');
+        const userEmail = document.getElementById('user-email');
+        const sidebar = document.getElementById('sidebar');
+        const toggleSidebarBtn = document.getElementById('toggle-sidebar');
+        const historyList = document.getElementById('history-list');
+        const newChatBtn = document.getElementById('new-chat-btn');
+        const errorMessage = document.getElementById('error-message');
+        
+        const chatHistoryEl = document.getElementById('chat-history');
+        const userInputEl = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const lengthSelectEl = document.getElementById('length-select');
+        const lengthValueEl = document.getElementById('length-value');
+        const directAnswerBtn = document.getElementById('direct-answer-btn');
+        const quizBtn = document.getElementById('quiz-btn');
+        const easyModeToggle = document.getElementById('easy-mode-toggle');
+        const clearChatBtn = document.getElementById('clear-chat-btn');
+
+        // State variables
+        let supabase = null;
+        let currentApiKeyIndex = 0;
+        let currentUser = null;
+        let currentConversationId = null;
+        let chatHistory = [];
+        let isFetching = false;
+        
+        // Function to get current API key
+        const getCurrentApiKey = () => {
+            if (config.GROQ_API_KEYS && config.GROQ_API_KEYS.length > 0) {
+                return config.GROQ_API_KEYS[currentApiKeyIndex];
+            }
+            return '';
+        };
+        
+        // Function to switch to next API key
+        const switchToNextApiKey = () => {
+            if (config.GROQ_API_KEYS && config.GROQ_API_KEYS.length > 0) {
+                currentApiKeyIndex = (currentApiKeyIndex + 1) % config.GROQ_API_KEYS.length;
+            }
+        };
+        
+        // Auth functions
+        const showAuth = () => {
+            authContainer.style.display = 'flex';
+            appContainer.style.display = 'none';
+            loadingOverlay.style.display = 'none';
+        };
+        
+        const showApp = (user) => {
+            currentUser = user;
+            if (user && user.email) {
+                userEmail.textContent = user.email;
+            }
+            authContainer.style.display = 'none';
+            appContainer.style.display = 'flex';
+            loadingOverlay.style.display = 'none';
+            startNewConversation();
+            loadHistoryList();
+        };
+        
+        const showError = (message) => {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            console.error(message);
+        };
+        
+        const hideError = () => {
+            errorMessage.style.display = 'none';
+        };
+        
+        const showAuthError = (message) => {
+            authError.textContent = message;
+            authError.classList.remove('hidden');
+            console.error(message);
+        };
+        
+        const hideAuthError = () => {
+            authError.classList.add('hidden');
+        };
+        
+        const signUp = async () => {
+            hideAuthError();
+            
+            if (!supabase) {
+                showAuthError('Authentication service is not available');
+                return;
+            }
+            
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            
+            if (!email || !password) {
+                showAuthError('Please enter both email and password');
+                return;
+            }
+            
+            try {
+                const { data, error } = await supabase.auth.signUp({
+                    email,
+                    password
+                });
+                
+                if (error) {
+                    showAuthError(error.message);
+                } else {
+                    showAuthError('Check your email for confirmation link');
+                }
+            } catch (error) {
+                showAuthError('An error occurred during signup');
+                console.error('Signup error:', error);
+            }
+        };
+        
+        const login = async () => {
+            hideAuthError();
+            
+            if (!supabase) {
+                showAuthError('Authentication service is not available');
+                return;
+            }
+            
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            
+            if (!email || !password) {
+                showAuthError('Please enter both email and password');
+                return;
+            }
+            
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email,
+                    password
+                });
+                
+                if (error) {
+                    showAuthError(error.message);
+                } else {
+                    showApp(data.user);
+                }
+            } catch (error) {
+                showAuthError('An error occurred during login');
+                console.error('Login error:', error);
+            }
+        };
+        
+        const logout = async () => {
+            if (supabase) {
+                try {
+                    await supabase.auth.signOut();
+                } catch (error) {
+                    console.error('Logout error:', error);
+                }
+            }
+            currentUser = null;
+            chatHistory = [];
+            currentConversationId = null;
+            showAuth();
+        };
+        
+        // History functions
+        const toggleSidebar = () => {
+            sidebar.classList.toggle('open');
+        };
+        
+        const loadHistoryList = async () => {
+            if (!supabase || !currentUser) return;
+            
+            try {
+                // Get distinct conversations
+                const { data, error } = await supabase
+                    .from('user_chat_history')
+                    .select('conversation_id, created_at, message')
+                    .eq('user_id', currentUser.id)
+                    .order('created_at', { ascending: false });
+                
+                if (!error && data) {
+                    // Group by conversation_id and get the first message for each
+                    const conversations = {};
+                    data.forEach(item => {
+                        if (!conversations[item.conversation_id]) {
+                            conversations[item.conversation_id] = {
+                                id: item.conversation_id,
+                                createdAt: item.created_at,
+                                firstMessage: item.message
+                            };
+                        }
+                    });
+                    
+                    // Sort conversations by creation date
+                    const sortedConversations = Object.values(conversations)
+                        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    
+                    // Display conversations
+                    historyList.innerHTML = '';
+                    sortedConversations.forEach(conv => {
+                        const preview = conv.firstMessage.length > 30 ? conv.firstMessage.substring(0, 30) + '...' : conv.firstMessage;
+                        const date = new Date(conv.createdAt).toLocaleDateString();
+                        
+                        const historyItem = document.createElement('div');
+                        historyItem.className = 'history-item';
+                        if (conv.id === currentConversationId) {
+                            historyItem.classList.add('active');
+                        }
+                        historyItem.innerHTML = `
+                            <div class="font-semibold">${date}</div>
+                            <div class="text-gray-600 text-sm">${preview}</div>
+                        `;
+                        historyItem.addEventListener('click', () => loadConversation(conv.id));
+                        historyList.appendChild(historyItem);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading history:', error);
+            }
+        };
+        
+        const loadConversation = async (conversationId) => {
+            if (!supabase || !currentUser) return;
+            
+            try {
+                // Clear current chat
+                chatHistory = [];
+                chatHistoryEl.innerHTML = '<div class="welcome-message"><h2 class="text-2xl font-bold text-[#a37d65] mb-4">Loading conversation...</h2></div>';
+                
+                // Load conversation from Supabase
+                const { data, error } = await supabase
+                    .from('user_chat_history')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .eq('conversation_id', conversationId)
+                    .order('created_at', { ascending: true });
+                
+                if (!error && data) {
+                    // Clear welcome message
+                    chatHistoryEl.innerHTML = '';
+                    
+                    data.forEach(item => {
+                        chatHistory.push({
+                            id: item.id,
+                            sender: item.sender,
+                            text: item.message
+                        });
+                        createMessageBubble(item.message, item.sender);
+                    });
+                    
+                    // Set current conversation ID
+                    currentConversationId = conversationId;
+                    loadHistoryList(); // Refresh sidebar to show active conversation
+                }
+            } catch (error) {
+                console.error('Error loading conversation:', error);
+                chatHistoryEl.innerHTML = '';
+                createMessageBubble('Error loading conversation', 'assistant');
+            }
+        };
+        
+        const startNewConversation = async () => {
+            // Clear current chat
+            chatHistory = [];
+            chatHistoryEl.innerHTML = `
+                <div class="welcome-message">
+                    <h2 class="text-2xl font-bold text-[#a37d65] mb-4">New Conversation</h2>
+                    <p class="mb-4">Ask any study-related questions and I'll help you learn.</p>
+                    <p>Try asking about a topic you're studying, or use the options below to get started.</p>
+                </div>
+            `;
+            
+            // Generate new conversation ID
+            currentConversationId = 'conv_' + Date.now();
+            
+            // Refresh history list
+            loadHistoryList();
+        };
+        
+        // Chat functions
+        const createMessageBubble = (text, sender) => {
+            // Remove welcome message if it exists
+            const welcomeMessage = chatHistoryEl.querySelector('.welcome-message');
+            if (welcomeMessage) {
+                chatHistoryEl.innerHTML = '';
+            }
+            
+            const bubble = document.createElement('div');
+            bubble.textContent = text;
+            bubble.classList.add('message-bubble', 'mb-2');
+
+            if (sender === 'user') {
+                bubble.classList.add('user-message', 'ml-auto');
+            } else {
+                bubble.classList.add('ai-message');
+            }
+            
+            chatHistoryEl.appendChild(bubble);
+            chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
+        };
+        
+        const saveChatHistory = async () => {
+            if (!supabase || !currentUser || !currentConversationId) return;
+            
+            try {
+                // Save to Supabase
+                for (const message of chatHistory) {
+                    // Only save new messages (without IDs)
+                    if (!message.id) {
+                        const { data, error } = await supabase
+                            .from('user_chat_history')
+                            .insert([
+                                {
+                                    user_id: currentUser.id,
+                                    message: message.text,
+                                    sender: message.sender,
+                                    conversation_id: currentConversationId
+                                }
+                            ]);
+                        
+                        if (!error && data && data.length > 0) {
+                            message.id = data[0].id;
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error saving chat history:', error);
+            }
+        };
+
+        const clearChatHistory = async () => {
+            // Just start a new conversation without clearing database
+            startNewConversation();
+        };
+        
+        const showLoadingIndicator = () => {
+            const loadingBubble = document.createElement('div');
+            loadingBubble.classList.add('message-bubble', 'ai-message', 'loading-dots');
+            loadingBubble.innerHTML = `<span>.</span><span>.</span><span>.</span>`;
+            chatHistoryEl.appendChild(loadingBubble);
+            chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
+        };
+
+        const hideLoadingIndicator = () => {
+            const loadingBubble = chatHistoryEl.querySelector('.loading-dots');
+            if (loadingBubble) {
+                chatHistoryEl.removeChild(loadingBubble);
+            }
+        };
+
+        const callGroqAPI = async (userPrompt, systemInstruction, temperature) => {
+            if (isFetching) return;
+            if (!config.GROQ_API_KEYS || config.GROQ_API_KEYS.length === 0) {
+                createMessageBubble('API key not configured. Please set up your Groq API keys.', 'assistant');
+                return;
+            }
+            
+            isFetching = true;
+            showLoadingIndicator();
+            
+            try {
+                // Prepare messages for API
+                const messages = [];
+                
+                // Add system instruction if provided
+                if (systemInstruction) {
+                    messages.push({ role: "system", content: systemInstruction });
+                }
+                
+                // Add chat history (limit to last 10 messages)
+                const chatHistoryForAPI = chatHistory.slice(-config.MAX_CHAT_HISTORY);
+                chatHistoryForAPI.forEach(msg => {
+                    messages.push({
+                        role: msg.sender === 'user' ? 'user' : 'assistant',
+                        content: msg.text
+                    });
+                });
+                
+                // Add current user prompt
+                messages.push({ role: 'user', content: userPrompt });
+                
+                // Configure API request
+                const payload = {
+                    messages: messages,
+                    model: config.MODEL_NAME,
+                    temperature: temperature,
+                    max_completion_tokens: config.MAX_COMPLETION_TOKENS,
+                    top_p: 1,
+                    stream: false,
+                    reasoning_effort: "medium",
+                    stop: null
+                };
+
+                const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${getCurrentApiKey()}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    // If we get an error, try switching to the next API key
+                    if (response.status === 429) { // Rate limit error
+                        switchToNextApiKey();
+                        // Retry with the new API key
+                        const retryResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${getCurrentApiKey()}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(payload)
+                        });
+                        
+                        if (!retryResponse.ok) {
+                            throw new Error(`HTTP error! status: ${retryResponse.status}`);
+                        }
+                        
+                        const retryResult = await retryResponse.json();
+                        const aiText = retryResult.choices[0].message.content;
+                        
+                        chatHistory.push({ sender: 'assistant', text: aiText });
+                        await saveChatHistory();
+                        hideLoadingIndicator();
+                        createMessageBubble(aiText, 'assistant');
+                        return;
+                    } else {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                }
+                
+                const result = await response.json();
+                const aiText = result.choices[0].message.content;
+                
+                chatHistory.push({ sender: 'assistant', text: aiText });
+                await saveChatHistory();
+                hideLoadingIndicator();
+                createMessageBubble(aiText, 'assistant');
+
+            } catch (error) {
+                console.error('API call failed:', error);
+                hideLoadingIndicator();
+                createMessageBubble(`An error occurred: ${error.message}. Please try again.`, 'assistant');
+            } finally {
+                isFetching = false;
+            }
+        };
+
+        const sendMessage = async (mode = 'normal') => {
+            const prompt = userInputEl.value.trim();
+            if (prompt === '') return;
+            
+            const responseLength = lengthSelectEl.value;
+            const isEasyMode = easyModeToggle.getAttribute('data-active') === 'true';
+            
+            // Add user message to history
+            chatHistory.push({ sender: 'user', text: prompt });
+            createMessageBubble(prompt, 'user');
+            await saveChatHistory();
+            userInputEl.value = '';
+
+            let systemInstruction = config.systemInstructions.base;
+            let temperature = config.DEFAULT_TEMPERATURE;
+
+            if (isEasyMode) {
+                systemInstruction += ' ' + config.systemInstructions.easyMode;
+            }
+
+            switch (mode) {
+                case 'direct':
+                    systemInstruction = config.systemInstructions.direct;
+                    temperature = config.temperatures.direct;
+                    break;
+                case 'quiz':
+                    systemInstruction += ' ' + config.systemInstructions.quiz;
+                    temperature = config.temperatures.detailed;
+                    break;
+                case 'normal':
+                    if (responseLength === '1') {
+                        systemInstruction += ' ' + config.systemInstructions.short;
+                        temperature = config.temperatures.short;
+                    } else if (responseLength === '3') {
+                        systemInstruction += ' ' + config.systemInstructions.detailed;
+                        temperature = config.temperatures.detailed;
+                    }
+                    break;
+            }
+
+            await callGroqAPI(prompt, systemInstruction, temperature);
+        };
+
+        // Event Listeners
+        if (loginBtn) loginBtn.addEventListener('click', login);
+        if (signupBtn) signupBtn.addEventListener('click', signUp);
+        if (logoutBtn) logoutBtn.addEventListener('click', logout);
+        if (toggleSidebarBtn) toggleSidebarBtn.addEventListener('click', toggleSidebar);
+        if (newChatBtn) newChatBtn.addEventListener('click', startNewConversation);
+        
+        if (sendBtn) sendBtn.addEventListener('click', () => sendMessage('normal'));
+        if (userInputEl) userInputEl.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage('normal');
+            }
+        });
+
+        if (lengthSelectEl) lengthSelectEl.addEventListener('input', () => {
+            const value = lengthSelectEl.value;
+            let label = '';
+            switch (value) {
+                case '1':
+                    label = 'Short';
+                    break;
+                case '2':
+                    label = 'Normal';
+                    break;
+                case '3':
+                    label = 'Detailed';
+                    break;
+            }
+            if (lengthValueEl) lengthValueEl.textContent = label;
+        });
+
+        if (directAnswerBtn) directAnswerBtn.addEventListener('click', () => sendMessage('direct'));
+        if (quizBtn) quizBtn.addEventListener('click', () => sendMessage('quiz'));
+        
+        if (easyModeToggle) easyModeToggle.addEventListener('click', () => {
+            const isActive = easyModeToggle.getAttribute('data-active') === 'true';
+            easyModeToggle.setAttribute('data-active', !isActive);
+            easyModeToggle.textContent = `Easy Mode: ${!isActive ? 'ON' : 'OFF'}`;
+            easyModeToggle.classList.toggle('bg-[#c8a48b]');
+            easyModeToggle.classList.toggle('bg-[#a37d65]');
+        });
+
+        if (clearChatBtn) clearChatBtn.addEventListener('click', async () => {
+            await clearChatHistory();
+        });
+
+        // Initialize Supabase
+        const initializeSupabase = () => {
+            try {
+                if (config.SUPABASE_URL && config.SUPABASE_KEY) {
+                    supabase = window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_KEY);
+                    console.log('Supabase initialized successfully');
+                } else {
+                    console.warn('Supabase configuration missing');
+                }
+            } catch (error) {
+                console.error('Supabase initialization error:', error);
+                showError('Failed to initialize Supabase. Some features may not work properly.');
+            }
+        };
+
+        // Check user session on load
+        const checkSession = async () => {
+            initializeSupabase();
+            
+            if (!supabase) {
+                // Show app without auth if Supabase is not available
+                showApp(null);
+                return;
+            }
+            
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session) {
+                    showApp(session.user);
+                } else {
+                    showAuth();
+                }
+            } catch (error) {
+                console.error('Session check error:', error);
+                showAuth();
+            }
+        };
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                checkSession();
+            }, 1000); // Give a small delay to ensure all resources are loaded
+        });
+        
+        // Listen for auth changes
+        if (supabase) {
+            supabase.auth.onAuthStateChange((event, session) => {
+                if (event === 'SIGNED_IN' && session) {
+                    showApp(session.user);
+                } else if (event === 'SIGNED_OUT') {
+                    showAuth();
+                }
+            });
+        }
+    </script>
+</body>
+</html>
