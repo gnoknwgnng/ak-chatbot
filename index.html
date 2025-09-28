@@ -155,6 +155,7 @@
             align-items: center;
             justify-content: space-between;
             margin-bottom: 1rem;
+            flex-wrap: wrap;
         }
         
         /* Sidebar */
@@ -165,6 +166,11 @@
             padding: 1rem;
             overflow-y: auto;
             display: none;
+            position: absolute;
+            height: calc(100% - 60px);
+            z-index: 10;
+            top: 60px;
+            left: 0;
         }
         
         .sidebar.open {
@@ -207,13 +213,14 @@
             flex: 1;
             display: flex;
             overflow: hidden;
+            margin-top: 60px;
         }
         
         .chat-container {
             flex: 1;
             display: flex;
             flex-direction: column;
-            height: 100%;
+            height: calc(100vh - 60px);
         }
         
         /* Error message */
@@ -246,6 +253,80 @@
             text-align: center;
             padding: 2rem;
             color: #6b7280;
+        }
+        
+        /* Mobile responsive fixes */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: calc(100% - 120px);
+                top: 120px;
+            }
+            
+            .user-info {
+                flex-direction: column;
+                align-items: stretch;
+                text-align: center;
+            }
+            
+            .user-info h1 {
+                font-size: 1.5rem;
+                margin-bottom: 0.5rem;
+            }
+            
+            .user-info > div {
+                display: flex;
+                justify-content: center;
+                gap: 1rem;
+            }
+            
+            .options-section {
+                padding: 0.5rem;
+            }
+            
+            .options-grid {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+            
+            .message-bubble {
+                max-width: 90%;
+                padding: 0.5rem;
+                font-size: 0.9rem;
+            }
+            
+            #chat-history {
+                padding: 10px;
+            }
+            
+            .text-area {
+                font-size: 1rem;
+                padding: 0.75rem;
+            }
+            
+            #send-btn {
+                padding: 0.5rem;
+            }
+            
+            .welcome-message {
+                padding: 1rem;
+            }
+            
+            .welcome-message h2 {
+                font-size: 1.25rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .modal-content {
+                width: 95%;
+                padding: 15px;
+            }
+            
+            .button-gradient, .clear-btn {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.875rem;
+            }
         }
     </style>
 </head>
@@ -294,8 +375,8 @@
             <!-- Chat Container -->
             <div class="chat-container">
                 <div class="user-info p-4">
-                    <h1 class="text-3xl font-bold text-center text-[#a37d65]">AI Study Assistant</h1>
-                    <div>
+                    <h1 class="text-2xl sm:text-3xl font-bold text-center text-[#a37d65]">AI Study Assistant</h1>
+                    <div class="mt-2">
                         <span id="user-email" class="text-sm text-gray-600 mr-4"></span>
                         <button id="logout-btn" class="text-sm text-gray-600 hover:text-[#a37d65]">Logout</button>
                     </div>
@@ -311,41 +392,43 @@
                 </div>
                 
                 <!-- Options Section -->
-                <div class="p-4 bg-gray-100 rounded-lg mb-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div class="flex flex-col items-start">
-                        <label for="length-select" class="text-sm font-semibold text-gray-700">Response Length:</label>
-                        <div class="flex items-center w-full mt-1">
-                            <span id="length-value" class="text-sm text-gray-600 w-12 text-center mr-2">Normal</span>
-                            <input type="range" id="length-select" min="1" max="3" value="2" class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer">
+                <div class="p-4 bg-gray-100 rounded-lg mb-4 options-section">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 options-grid">
+                        <div class="flex flex-col items-start">
+                            <label for="length-select" class="text-sm font-semibold text-gray-700">Response Length:</label>
+                            <div class="flex items-center w-full mt-1">
+                                <span id="length-value" class="text-sm text-gray-600 w-12 text-center mr-2">Normal</span>
+                                <input type="range" id="length-select" min="1" max="3" value="2" class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer">
+                            </div>
                         </div>
-                    </div>
-                    <div class="flex items-center justify-center">
-                        <button id="direct-answer-btn" class="w-full button-gradient py-2 px-4 rounded-lg shadow-sm">
-                            Direct Answer
-                        </button>
-                    </div>
-                    <div class="flex items-center justify-center">
-                        <button id="quiz-btn" class="w-full button-gradient py-2 px-4 rounded-lg shadow-sm">
-                            Generate Quiz
-                        </button>
-                    </div>
-                    <div class="flex items-center justify-center">
-                        <button id="easy-mode-toggle" class="w-full button-gradient py-2 px-4 rounded-lg shadow-sm" data-active="false">
-                            Easy Mode: OFF
-                        </button>
-                    </div>
-                    <div class="col-span-2 md:col-span-4 flex items-center justify-center">
-                        <button id="clear-chat-btn" class="w-full clear-btn py-2 px-4 rounded-lg shadow-sm font-semibold">
-                            Clear Chat
-                        </button>
+                        <div class="flex items-center justify-center">
+                            <button id="direct-answer-btn" class="w-full button-gradient py-2 px-4 rounded-lg shadow-sm">
+                                Direct Answer
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-center">
+                            <button id="quiz-btn" class="w-full button-gradient py-2 px-4 rounded-lg shadow-sm">
+                                Generate Quiz
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-center">
+                            <button id="easy-mode-toggle" class="w-full button-gradient py-2 px-4 rounded-lg shadow-sm" data-active="false">
+                                Easy Mode: OFF
+                            </button>
+                        </div>
+                        <div class="col-span-1 sm:col-span-2 md:col-span-4 flex items-center justify-center">
+                            <button id="clear-chat-btn" class="w-full clear-btn py-2 px-4 rounded-lg shadow-sm font-semibold">
+                                Clear Chat
+                            </button>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Input and Send Button -->
                 <div class="flex items-center space-x-2 p-4">
-                    <textarea id="user-input" rows="1" class="text-area flex-grow p-4 rounded-lg border-2 border-gray-300 focus:border-gray-500 transition-colors" placeholder="Type your message..."></textarea>
-                    <button id="send-btn" class="bg-[#a37d65] text-white p-3 rounded-lg shadow-lg hover:bg-[#8e6b5a] transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+                    <textarea id="user-input" rows="1" class="text-area flex-grow p-3 sm:p-4 rounded-lg border-2 border-gray-300 focus:border-gray-500 transition-colors" placeholder="Type your message..."></textarea>
+                    <button id="send-btn" class="bg-[#a37d65] text-white p-2 sm:p-3 rounded-lg shadow-lg hover:bg-[#8e6b5a] transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 sm:w-6 sm:h-6">
                             <path d="M3.478 2.405a.75.75 0 01.087 1.254l5.346 5.346a.75.75 0 01-1.06 1.06L2.405 3.565a.75.75 0 011.06-1.06zM12.75 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM19.125 18.067a.75.75 0 011.061-.087l5.346-5.346a.75.75 0 011.06 1.06l-5.346 5.346a.75.75 0 01-.087-1.06zM3.478 21.595a.75.75 0 01.087-1.254l5.346-5.346a.75.75 0 011.06 1.06l-5.346 5.346a.75.75 0 01-1.06-1.06zM21.595 3.478a.75.75 0 01-1.254-.087l-5.346-5.346a.75.75 0 01-1.06 1.06l5.346 5.346a.75.75 0 01.087-1.06z" />
                         </svg>
                     </button>
@@ -959,6 +1042,33 @@
             await clearChatHistory();
         });
 
+        // Mobile-specific enhancements
+        const handleMobileLayout = () => {
+            const isMobile = window.innerWidth <= 768;
+            
+            // Close sidebar by default on mobile
+            if (isMobile && sidebar.classList.contains('open')) {
+                sidebar.classList.remove('open');
+            }
+            
+            // Adjust textarea height based on content
+            if (userInputEl) {
+                userInputEl.addEventListener('input', function() {
+                    this.style.height = 'auto';
+                    this.style.height = (this.scrollHeight) + 'px';
+                    // Limit maximum height
+                    if (this.scrollHeight > 150) {
+                        this.style.overflowY = 'scroll';
+                    } else {
+                        this.style.overflowY = 'hidden';
+                    }
+                });
+            }
+        };
+
+        // Handle window resize events
+        window.addEventListener('resize', handleMobileLayout);
+
         // Initialize Supabase
         const initializeSupabase = () => {
             try {
@@ -1001,6 +1111,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 checkSession();
+                handleMobileLayout(); // Apply mobile layout fixes on load
             }, 1000); // Give a small delay to ensure all resources are loaded
         });
         
