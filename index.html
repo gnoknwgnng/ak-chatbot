@@ -48,7 +48,7 @@
             background-color: white;
             border-top: 1px solid #e2e8f0;
             position: sticky;
-            top: 0;
+            bottom: 0;
             z-index: 10;
         }
         
@@ -95,7 +95,7 @@
             flex: 1;
             min-height: 0; /* Allow flex items to shrink below their content size */
             overflow-y: auto;
-            margin-bottom: 1rem;
+            margin-bottom: 0; /* Remove margin */
         }
         
         #chat-history {
@@ -342,8 +342,7 @@
             
             #chat-history {
                 padding: 10px;
-                height: calc(100vh - 300px); /* Ensure chat history has proper height on mobile */
-                min-height: 200px;
+                min-height: 150px;
             }
             
             .text-area {
@@ -355,7 +354,8 @@
             .input-container {
                 padding: 0.5rem;
                 space-x-2: space-x-1; /* Reduce spacing on mobile */
-                position: relative; /* Remove sticky for mobile */
+                position: sticky;
+                bottom: 0;
             }
             
             .send-button {
@@ -451,16 +451,6 @@
                     </div>
                 </div>
 
-                <!-- Input and Send Button - Moved to top for better mobile visibility -->
-                <div class="flex items-center space-x-2 p-4 input-container">
-                    <textarea id="user-input" rows="1" class="text-area flex-grow p-3 sm:p-4 rounded-lg border-2 border-gray-300 focus:border-gray-500 transition-colors" placeholder="Type your message..."></textarea>
-                    <button id="send-btn" class="bg-[#a37d65] text-white p-2 sm:p-3 rounded-lg shadow-lg hover:bg-[#8e6b5a] transition-colors send-button">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 sm:w-6 sm:h-6">
-                            <path d="M3.478 2.405a.75.75 0 01.087 1.254l5.346 5.346a.75.75 0 01-1.06 1.06L2.405 3.565a.75.75 0 011.06-1.06zM12.75 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM19.125 18.067a.75.75 0 011.061-.087l5.346-5.346a.75.75 0 011.06 1.06l-5.346 5.346a.75.75 0 01-.087-1.06zM3.478 21.595a.75.75 0 01.087-1.254l5.346-5.346a.75.75 0 011.06 1.06l-5.346 5.346a.75.75 0 01-1.06-1.06zM21.595 3.478a.75.75 0 01-1.254-.087l-5.346-5.346a.75.75 0 01-1.06 1.06l5.346 5.346a.75.75 0 01.087-1.06z" />
-                        </svg>
-                    </button>
-                </div>
-
                 <!-- Chat History -->
                 <div id="chat-history" class="flex-grow overflow-y-auto p-2 mb-4 rounded-lg chat-history-container">
                     <div class="welcome-message">
@@ -503,6 +493,15 @@
                     </div>
                 </div>
 
+                <!-- Input and Send Button - Back at the bottom -->
+                <div class="flex items-center space-x-2 p-4 input-container">
+                    <textarea id="user-input" rows="1" class="text-area flex-grow p-3 sm:p-4 rounded-lg border-2 border-gray-300 focus:border-gray-500 transition-colors" placeholder="Type your message..."></textarea>
+                    <button id="send-btn" class="bg-[#a37d65] text-white p-2 sm:p-3 rounded-lg shadow-lg hover:bg-[#8e6b5a] transition-colors send-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 sm:w-6 sm:h-6">
+                            <path d="M3.478 2.405a.75.75 0 01.087 1.254l5.346 5.346a.75.75 0 01-1.06 1.06L2.405 3.565a.75.75 0 011.06-1.06zM12.75 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM19.125 18.067a.75.75 0 011.061-.087l5.346-5.346a.75.75 0 011.06 1.06l-5.346 5.346a.75.75 0 01-.087-1.06zM3.478 21.595a.75.75 0 01.087-1.254l5.346-5.346a.75.75 0 011.06 1.06l-5.346 5.346a.75.75 0 01-1.06-1.06zM21.595 3.478a.75.75 0 01-1.254-.087l-5.346-5.346a.75.75 0 01-1.06 1.06l5.346 5.346a.75.75 0 01.087-1.06z" />
+                        </svg>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -1160,10 +1159,11 @@
                 }
             }
             
-            // Ensure input area is visible
+            // Ensure input area is visible and properly positioned
             const inputContainer = document.querySelector('.input-container');
             if (inputContainer) {
-                inputContainer.style.position = isMobile ? 'relative' : 'sticky';
+                inputContainer.style.position = 'sticky';
+                inputContainer.style.bottom = '0';
             }
             
             // Adjust textarea height based on content
