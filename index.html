@@ -43,12 +43,34 @@
             overflow-y: auto;
         }
         
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 60px);
+            min-height: 0; /* Allow flex items to shrink below their content size */
+        }
+        
+        .chat-history-container {
+            flex: 1;
+            min-height: 0; /* Allow flex items to shrink below their content size */
+            overflow-y: auto;
+            margin-bottom: 0; /* Remove margin */
+        }
+        
+        #chat-history {
+            padding: 20px;
+            flex: 1;
+            min-height: 150px;
+            overflow-y: auto;
+        }
+        
         .input-container {
             flex-shrink: 0; /* Prevent input area from shrinking */
             background-color: white;
             border-top: 1px solid #e2e8f0;
             position: sticky;
-            bottom: 0;
+            top: 0;
             z-index: 10;
         }
         
@@ -95,7 +117,6 @@
             flex: 1;
             min-height: 0; /* Allow flex items to shrink below their content size */
             overflow-y: auto;
-            margin-bottom: 0; /* Remove margin */
         }
         
         #chat-history {
@@ -138,6 +159,18 @@
         }
         .clear-btn:hover {
             background-color: #9ca3af;
+        }
+        
+        /* Mobile options */
+        @media (max-width: 768px) {
+            .options-section {
+                padding: 0.5rem;
+            }
+            
+            .button-gradient, .clear-btn {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.75rem;
+            }
         }
         
         /* Auth Modal */
@@ -343,6 +376,7 @@
             #chat-history {
                 padding: 10px;
                 min-height: 150px;
+                flex: 1;
             }
             
             .text-area {
@@ -355,7 +389,8 @@
                 padding: 0.5rem;
                 space-x-2: space-x-1; /* Reduce spacing on mobile */
                 position: sticky;
-                bottom: 0;
+                top: 0;
+                bottom: auto;
             }
             
             .send-button {
@@ -451,6 +486,16 @@
                     </div>
                 </div>
 
+                <!-- Input and Send Button - Moved up for better visibility -->
+                <div class="flex items-center space-x-2 p-4 input-container">
+                    <textarea id="user-input" rows="1" class="text-area flex-grow p-3 sm:p-4 rounded-lg border-2 border-gray-300 focus:border-gray-500 transition-colors" placeholder="Type your message..."></textarea>
+                    <button id="send-btn" class="bg-[#a37d65] text-white p-2 sm:p-3 rounded-lg shadow-lg hover:bg-[#8e6b5a] transition-colors send-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 sm:w-6 sm:h-6">
+                            <path d="M3.478 2.405a.75.75 0 01.087 1.254l5.346 5.346a.75.75 0 01-1.06 1.06L2.405 3.565a.75.75 0 011.06-1.06zM12.75 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM19.125 18.067a.75.75 0 011.061-.087l5.346-5.346a.75.75 0 011.06 1.06l-5.346 5.346a.75.75 0 01-.087-1.06zM3.478 21.595a.75.75 0 01.087-1.254l5.346-5.346a.75.75 0 011.06 1.06l-5.346 5.346a.75.75 0 01-1.06-1.06zM21.595 3.478a.75.75 0 01-1.254-.087l-5.346-5.346a.75.75 0 01-1.06 1.06l5.346 5.346a.75.75 0 01.087-1.06z" />
+                        </svg>
+                    </button>
+                </div>
+
                 <!-- Chat History -->
                 <div id="chat-history" class="flex-grow overflow-y-auto p-2 mb-4 rounded-lg chat-history-container">
                     <div class="welcome-message">
@@ -460,8 +505,8 @@
                     </div>
                 </div>
                 
-                <!-- Options Section -->
-                <div class="p-4 bg-gray-100 rounded-lg mb-4 options-section">
+                <!-- Options Section - Hidden on mobile for better visibility -->
+                <div class="p-4 bg-gray-100 rounded-lg mb-4 options-section hidden md:block">
                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 options-grid">
                         <div class="flex flex-col items-start">
                             <label for="length-select" class="text-sm font-semibold text-gray-700">Response Length:</label>
@@ -493,15 +538,21 @@
                     </div>
                 </div>
 
-                <!-- Input and Send Button - Back at the bottom -->
-                <div class="flex items-center space-x-2 p-4 input-container">
-                    <textarea id="user-input" rows="1" class="text-area flex-grow p-3 sm:p-4 rounded-lg border-2 border-gray-300 focus:border-gray-500 transition-colors" placeholder="Type your message..."></textarea>
-                    <button id="send-btn" class="bg-[#a37d65] text-white p-2 sm:p-3 rounded-lg shadow-lg hover:bg-[#8e6b5a] transition-colors send-button">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 sm:w-6 sm:h-6">
-                            <path d="M3.478 2.405a.75.75 0 01.087 1.254l5.346 5.346a.75.75 0 01-1.06 1.06L2.405 3.565a.75.75 0 011.06-1.06zM12.75 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM19.125 18.067a.75.75 0 011.061-.087l5.346-5.346a.75.75 0 011.06 1.06l-5.346 5.346a.75.75 0 01-.087-1.06zM3.478 21.595a.75.75 0 01.087-1.254l5.346-5.346a.75.75 0 011.06 1.06l-5.346 5.346a.75.75 0 01-1.06-1.06zM21.595 3.478a.75.75 0 01-1.254-.087l-5.346-5.346a.75.75 0 01-1.06 1.06l5.346 5.346a.75.75 0 01.087-1.06z" />
-                        </svg>
-                    </button>
+                <!-- Simplified Options for Mobile -->
+                <div class="p-4 bg-gray-100 rounded-lg mb-4 options-section md:hidden">
+                    <div class="flex flex-wrap gap-2 justify-center">
+                        <button id="mobile-direct-answer-btn" class="button-gradient py-1 px-2 rounded text-sm">
+                            Direct
+                        </button>
+                        <button id="mobile-easy-mode-toggle" class="button-gradient py-1 px-2 rounded text-sm" data-active="false">
+                            Easy: OFF
+                        </button>
+                        <button id="mobile-clear-chat-btn" class="clear-btn py-1 px-2 rounded text-sm">
+                            Clear
+                        </button>
+                    </div>
                 </div>
+
             </div>
         </div>
     </div>
@@ -592,6 +643,11 @@
         const quizBtn = document.getElementById('quiz-btn');
         const easyModeToggle = document.getElementById('easy-mode-toggle');
         const clearChatBtn = document.getElementById('clear-chat-btn');
+        
+        // Mobile elements
+        const mobileDirectAnswerBtn = document.getElementById('mobile-direct-answer-btn');
+        const mobileEasyModeToggle = document.getElementById('mobile-easy-mode-toggle');
+        const mobileClearChatBtn = document.getElementById('mobile-clear-chat-btn');
 
         // State variables
         let supabase = null;
@@ -1132,6 +1188,27 @@
         if (clearChatBtn) clearChatBtn.addEventListener('click', async () => {
             await clearChatHistory();
         });
+        
+        // Mobile button event listeners
+        if (mobileDirectAnswerBtn) mobileDirectAnswerBtn.addEventListener('click', () => sendMessage('direct'));
+        if (mobileEasyModeToggle) mobileEasyModeToggle.addEventListener('click', () => {
+            const isActive = mobileEasyModeToggle.getAttribute('data-active') === 'true';
+            mobileEasyModeToggle.setAttribute('data-active', !isActive);
+            mobileEasyModeToggle.textContent = `Easy: ${!isActive ? 'ON' : 'OFF'}`;
+            mobileEasyModeToggle.classList.toggle('bg-[#c8a48b]');
+            mobileEasyModeToggle.classList.toggle('bg-[#a37d65]');
+            
+            // Also update the desktop version for consistency
+            if (easyModeToggle) {
+                easyModeToggle.setAttribute('data-active', !isActive);
+                easyModeToggle.textContent = `Easy Mode: ${!isActive ? 'ON' : 'OFF'}`;
+                easyModeToggle.classList.toggle('bg-[#c8a48b]');
+                easyModeToggle.classList.toggle('bg-[#a37d65]');
+            }
+        });
+        if (mobileClearChatBtn) mobileClearChatBtn.addEventListener('click', async () => {
+            await clearChatHistory();
+        });
 
         // Mobile-specific enhancements
         const handleMobileLayout = () => {
@@ -1149,10 +1226,10 @@
                     // Calculate height based on viewport and other elements
                     const viewportHeight = window.innerHeight;
                     const headerHeight = document.querySelector('.user-info')?.offsetHeight || 80;
-                    const optionsHeight = document.querySelector('.options-section')?.offsetHeight || 200;
                     const inputHeight = document.querySelector('.input-container')?.offsetHeight || 80;
+                    const mobileOptionsHeight = document.querySelector('.options-section:not(.md\\:block)')?.offsetHeight || 40;
                     
-                    const availableHeight = viewportHeight - headerHeight - optionsHeight - inputHeight - 20;
+                    const availableHeight = viewportHeight - headerHeight - inputHeight - mobileOptionsHeight - 20;
                     chatHistory.style.height = Math.max(availableHeight, 150) + 'px';
                 } else {
                     chatHistory.style.height = 'calc(100vh - 250px)';
@@ -1163,7 +1240,7 @@
             const inputContainer = document.querySelector('.input-container');
             if (inputContainer) {
                 inputContainer.style.position = 'sticky';
-                inputContainer.style.bottom = '0';
+                inputContainer.style.top = '0';
             }
             
             // Adjust textarea height based on content
