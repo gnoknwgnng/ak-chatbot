@@ -66,6 +66,13 @@
         
         #chat-history {
             padding: 20px;
+            height: calc(100vh - 250px); /* Ensure proper height */
+            min-height: 200px;
+        }
+        
+        .chat-history-container {
+            height: calc(100vh - 250px); /* Ensure proper height */
+            min-height: 200px;
         }
         
         .loading-dots span {
@@ -297,6 +304,8 @@
             
             #chat-history {
                 padding: 10px;
+                height: calc(100vh - 300px); /* Ensure chat history has proper height on mobile */
+                min-height: 200px;
             }
             
             .text-area {
@@ -383,7 +392,7 @@
                 </div>
 
                 <!-- Chat History -->
-                <div id="chat-history" class="flex-grow overflow-y-auto p-2 mb-4 rounded-lg">
+                <div id="chat-history" class="flex-grow overflow-y-auto p-2 mb-4 rounded-lg chat-history-container">
                     <div class="welcome-message">
                         <h2 class="text-2xl font-bold text-[#a37d65] mb-4">Welcome to AI Study Assistant!</h2>
                         <p class="mb-4">Ask any study-related questions and I'll help you learn.</p>
@@ -669,6 +678,11 @@
         // History functions
         const toggleSidebar = () => {
             sidebar.classList.toggle('open');
+            // Scroll chat to bottom when sidebar is toggled
+            setTimeout(() => {
+                chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
+                handleMobileLayout(); // Re-adjust layout after sidebar toggle
+            }, 300); // Delay to allow sidebar animation to complete
         };
         
         const loadHistoryList = async () => {
@@ -755,6 +769,9 @@
                     // Set current conversation ID
                     currentConversationId = conversationId;
                     loadHistoryList(); // Refresh sidebar to show active conversation
+                    
+                    // Scroll to bottom after loading conversation
+                    setTimeout(scrollToBottom, 100);
                 }
             } catch (error) {
                 console.error('Error loading conversation:', error);
@@ -779,9 +796,20 @@
             
             // Refresh history list
             loadHistoryList();
+            
+            // Scroll to top for new conversation
+            chatHistoryEl.scrollTop = 0;
         };
         
         // Chat functions
+        const scrollToBottom = () => {
+            const chatHistory = document.getElementById('chat-history');
+            if (chatHistory) {
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+            }
+        };
+        
+        // Call this function when needed
         const createMessageBubble = (text, sender) => {
             // Remove welcome message if it exists
             const welcomeMessage = chatHistoryEl.querySelector('.welcome-message');
@@ -800,7 +828,10 @@
             }
             
             chatHistoryEl.appendChild(bubble);
-            chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
+            scrollToBottom();
+            
+            // Ensure proper layout on mobile after adding message
+            handleMobileLayout();
         };
         
         const saveChatHistory = async () => {
@@ -1051,6 +1082,23 @@
                 sidebar.classList.remove('open');
             }
             
+            // Adjust chat history container height for mobile
+            const chatHistory = document.getElementById('chat-history');
+            if (chatHistory) {
+                if (isMobile) {
+                    // Calculate height based on viewport and other elements
+                    const viewportHeight = window.innerHeight;
+                    const headerHeight = document.querySelector('.user-info')?.offsetHeight || 80;
+                    const optionsHeight = document.querySelector('.options-section')?.offsetHeight || 200;
+                    const inputHeight = document.querySelector('.flex.items-center.space-x-2')?.offsetHeight || 80;
+                    
+                    const availableHeight = viewportHeight - headerHeight - optionsHeight - inputHeight - 20;
+                    chatHistory.style.height = Math.max(availableHeight, 200) + 'px';
+                } else {
+                    chatHistory.style.height = 'calc(100vh - 250px)';
+                }
+            }
+            
             // Adjust textarea height based on content
             if (userInputEl) {
                 userInputEl.addEventListener('input', function() {
@@ -1067,7 +1115,14 @@
         };
 
         // Handle window resize events
-        window.addEventListener('resize', handleMobileLayout);
+        window.addEventListener('resize', function() {
+            handleMobileLayout();
+            // Also scroll to bottom of chat when resizing
+            const chatHistory = document.getElementById('chat-history');
+            if (chatHistory) {
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+            }
+        });
 
         // Initialize Supabase
         const initializeSupabase = () => {
@@ -1112,6 +1167,7 @@
             setTimeout(() => {
                 checkSession();
                 handleMobileLayout(); // Apply mobile layout fixes on load
+                scrollToBottom(); // Ensure chat is scrolled to bottom on load
             }, 1000); // Give a small delay to ensure all resources are loaded
         });
         
