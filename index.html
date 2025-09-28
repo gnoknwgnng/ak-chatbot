@@ -247,6 +247,16 @@
             display: block;
         }
         
+        /* Mobile sidebar */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: calc(100% - 120px);
+                top: 120px;
+                z-index: 100;
+            }
+        }
+        
         .history-item {
             padding: 0.5rem;
             margin-bottom: 0.5rem;
@@ -793,11 +803,8 @@
         // History functions
         const toggleSidebar = () => {
             sidebar.classList.toggle('open');
-            // Scroll chat to bottom when sidebar is toggled
-            setTimeout(() => {
-                chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
-                handleMobileLayout(); // Re-adjust layout after sidebar toggle
-            }, 300); // Delay to allow sidebar animation to complete
+            // Remove the automatic closing on mobile
+            // The sidebar should stay open until the user closes it
         };
         
         const loadHistoryList = async () => {
@@ -843,7 +850,15 @@
                             <div class="font-semibold">${date}</div>
                             <div class="text-gray-600 text-sm">${preview}</div>
                         `;
-                        historyItem.addEventListener('click', () => loadConversation(conv.id));
+                        historyItem.addEventListener('click', (e) => {
+                            // Prevent sidebar from closing automatically
+                            e.stopPropagation();
+                            loadConversation(conv.id);
+                            // On mobile, we might want to close the sidebar after selecting
+                            if (window.innerWidth <= 768) {
+                                sidebar.classList.remove('open');
+                            }
+                        });
                         historyList.appendChild(historyItem);
                     });
                 }
@@ -914,6 +929,11 @@
             
             // Scroll to top for new conversation
             chatHistoryEl.scrollTop = 0;
+            
+            // On mobile, close the sidebar after starting new conversation
+            if (window.innerWidth <= 768 && sidebar.classList.contains('open')) {
+                sidebar.classList.remove('open');
+            }
         };
         
         // Chat functions
@@ -1213,10 +1233,8 @@
         const handleMobileLayout = () => {
             const isMobile = window.innerWidth <= 768;
             
-            // Close sidebar by default on mobile
-            if (isMobile && sidebar.classList.contains('open')) {
-                sidebar.classList.remove('open');
-            }
+            // Remove automatic sidebar closing on mobile
+            // Keep the sidebar state as is
             
             // Adjust chat history container height for mobile
             const chatHistory = document.getElementById('chat-history');
