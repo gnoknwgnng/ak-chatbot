@@ -65,7 +65,7 @@ const injectEnvIntoHtml = (htmlContent) => {
       };
     </script>
   `;
-  
+
   // Inject the script tag into the head of the HTML
   return htmlContent.replace('</head>', `${envScript}</head>`);
 };
@@ -75,22 +75,22 @@ module.exports = async (req, res) => {
   try {
     // Get the requested path
     let filePath = req.url;
-    
+
     // Serve index.html by default for root path
     if (filePath === '/') {
       filePath = '/index.html';
     }
-    
+
     // Construct the full file path
     const fullFilePath = path.join(__dirname, filePath);
-    
+
     // Get file extension
     const extname = String(path.extname(fullFilePath)).toLowerCase();
     const contentType = mimeTypes[extname] || 'application/octet-stream';
-    
+
     // Read the file
     const content = await fs.readFile(fullFilePath);
-    
+
     // If it's an HTML file, inject environment variables
     if (extname === '.html') {
       const modifiedContent = injectEnvIntoHtml(content.toString());
