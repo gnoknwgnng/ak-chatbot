@@ -348,6 +348,7 @@
             body {
                 height: 100vh;
                 overflow: hidden;
+                padding-bottom: env(safe-area-inset-bottom);
             }
             
             .notebook-container {
@@ -369,6 +370,7 @@
                 height: calc(100vh - 60px);
                 margin-top: 60px;
                 min-height: 0;
+                padding-bottom: 2rem;
             }
             
             .chat-container {
@@ -402,7 +404,8 @@
                 flex: 1;
                 min-height: 0;
                 overflow-y: auto;
-                margin-bottom: 0;
+                margin-bottom: 1rem;
+                padding-bottom: 1rem;
             }
             
             #chat-history {
@@ -436,13 +439,15 @@
             
             .input-container {
                 flex-shrink: 0;
-                padding: 0.75rem 0.5rem;
+                padding: 1rem 0.75rem;
+                margin-bottom: 1rem;
                 background-color: white;
                 border-top: 2px solid #e2e8f0;
+                border-radius: 12px 12px 0 0;
                 position: sticky;
                 bottom: 0;
                 z-index: 20;
-                box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+                box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
             }
             
             .send-button {
@@ -484,10 +489,12 @@
             }
             
             .input-container {
-                padding: 0.75rem 0.5rem;
+                padding: 1rem 0.75rem;
+                margin-bottom: 1.5rem;
                 background-color: white;
                 border-top: 2px solid #e2e8f0;
-                box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+                border-radius: 12px 12px 0 0;
+                box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
             }
             
             .user-info {
