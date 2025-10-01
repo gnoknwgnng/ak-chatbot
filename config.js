@@ -32,8 +32,8 @@ const config = {
   GROQ_API_KEYS: parseApiKeys(getEnvVar('GROQ_API_KEYS', '')),
   
   // OpenRouter API Configuration
-  OPENROUTER_API_KEY: getEnvVar('OPENROUTER_API_KEY', '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'),
-  OPENROUTER_VISION_MODEL: getEnvVar('OPENROUTER_VISION_MODEL', 'x-ai/grok-vision-beta'),
+  OPENROUTER_API_KEY: getEnvVar('OPENROUTER_API_KEY', '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'),
+  OPENROUTER_VISION_MODEL: getEnvVar('OPENROUTER_VISION_MODEL', 'x-ai/grok-4-fast:free'),
   
   // Model Configuration
   MODEL_NAME: getEnvVar('MODEL_NAME', 'openai/gpt-oss-120b'),
