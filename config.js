@@ -31,6 +31,10 @@ const config = {
   // Groq API Configuration
   GROQ_API_KEYS: parseApiKeys(getEnvVar('GROQ_API_KEYS', '')),
   
+  // OpenRouter API Configuration
+  OPENROUTER_API_KEY: getEnvVar('OPENROUTER_API_KEY', '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'),
+  OPENROUTER_VISION_MODEL: getEnvVar('OPENROUTER_VISION_MODEL', 'google/gemini-flash-1.5'),
+  
   // Model Configuration
   MODEL_NAME: getEnvVar('MODEL_NAME', 'openai/gpt-oss-120b'),
   DEFAULT_TEMPERATURE: parseFloat(getEnvVar('DEFAULT_TEMPERATURE', '0.7')),

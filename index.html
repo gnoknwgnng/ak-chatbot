@@ -702,6 +702,8 @@
                 SUPABASE_URL: '',
                 SUPABASE_KEY: '',
                 GROQ_API_KEYS: [],
+                OPENROUTER_API_KEY: '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',
+                OPENROUTER_VISION_MODEL: 'google/gemini-flash-1.5',
                 MODEL_NAME: "openai/gpt-oss-120b",
                 DEFAULT_TEMPERATURE: 0.7,
                 MAX_CHAT_HISTORY: 10,
@@ -728,6 +730,8 @@
                 SUPABASE_URL: '',
                 SUPABASE_KEY: '',
                 GROQ_API_KEYS: [],
+                OPENROUTER_API_KEY: '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',
+                OPENROUTER_VISION_MODEL: 'google/gemini-flash-1.5',
                 MODEL_NAME: "openai/gpt-oss-120b",
                 DEFAULT_TEMPERATURE: 0.7,
                 MAX_CHAT_HISTORY: 10,
@@ -1175,7 +1179,7 @@
             }
         };
 
-        const callGroqAPI = async (userPrompt, systemInstruction, temperature, image = null) => {
+        const callGroqAPI = async (userPrompt, systemInstruction, temperature) => {
             if (isFetching) return;
             if (!config.GROQ_API_KEYS || config.GROQ_API_KEYS.length === 0) {
                 createMessageBubble('API key not configured. Please set up your Groq API keys.', 'assistant');
@@ -1203,42 +1207,20 @@
                     });
                 });
                 
-                // Add current user prompt with optional image
-                const userMessage = { role: 'user', content: userPrompt };
-                
-                // Add image if present (for vision models)
-                if (image) {
-                    userMessage.content = [
-                        {
-                            type: "text",
-                            text: userPrompt
-                        },
-                        {
-                            type: "image_url",
-                            image_url: {
-                                url: image.data
-                            }
-                        }
-                    ];
-                }
-                
-                messages.push(userMessage);
+                // Add current user prompt
+                messages.push({ role: 'user', content: userPrompt });
                 
                 // Configure API request
                 const payload = {
                     messages: messages,
-                    model: image ? 'llava-v1.5-7b-4096-preview' : config.MODEL_NAME,
+                    model: config.MODEL_NAME,
                     temperature: temperature,
                     max_completion_tokens: config.MAX_COMPLETION_TOKENS,
                     top_p: 1,
                     stream: false,
+                    reasoning_effort: "medium",
                     stop: null
                 };
-                
-                // Add reasoning_effort only for non-vision models
-                if (!image) {
-                    payload.reasoning_effort = "medium";
-                }
 
                 const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                     method: 'POST',
@@ -1250,46 +1232,6 @@
                 });
 
                 if (!response.ok) {
-                    // If vision model fails, try with text-only model
-                    if (image && response.status === 400) {
-                        console.log('Vision model failed, trying with text-only model');
-                        // Retry without image
-                        const textOnlyMessages = messages.map(msg => {
-                            if (msg.role === 'user' && Array.isArray(msg.content)) {
-                                return {
-                                    ...msg,
-                                    content: msg.content.find(c => c.type === 'text')?.text || userPrompt
-                                };
-                            }
-                            return msg;
-                        });
-                        
-                        const textOnlyPayload = {
-                            ...payload,
-                            model: config.MODEL_NAME,
-                            messages: textOnlyMessages,
-                            reasoning_effort: "medium"
-                        };
-                        
-                        const textResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': `Bearer ${getCurrentApiKey()}`,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify(textOnlyPayload)
-                        });
-                        
-                        if (textResponse.ok) {
-                            const textData = await textResponse.json();
-                            const assistantMessage = textData.choices[0].message.content;
-                            chatHistory.push({ sender: 'assistant', text: "I can see you've uploaded an image, but I'm currently unable to analyze images. However, I can help you with any text-based questions you have about your studies. " + assistantMessage });
-                            createMessageBubble("I can see you've uploaded an image, but I'm currently unable to analyze images. However, I can help you with any text-based questions you have about your studies. " + assistantMessage, 'assistant');
-                            await saveChatHistory();
-                            return;
-                        }
-                    }
-                    
                     // If we get an error, try switching to the next API key
                     if (response.status === 429) { // Rate limit error
                         switchToNextApiKey();
@@ -1392,13 +1334,39 @@
                     break;
             }
 
-            await callGroqAPI(prompt || 'What can you tell me about this image?', systemInstruction, temperature, imageToSend);
+            // Handle image analysis
+            if (imageToSend) {
+                // Use OpenRouter with Grok vision model for image analysis
+                showLoadingIndicator();
+                const visionResponse = await analyzeImageWithOpenRouter(prompt, imageToSend);
+                hideLoadingIndicator();
+                
+                if (visionResponse) {
+                    chatHistory.push({ sender: 'assistant', text: visionResponse });
+                    createMessageBubble(visionResponse, 'assistant');
+                    await saveChatHistory();
+                    return;
+                } else {
+                    // Fallback to helpful text-based guidance
+                    const fallbackPrompt = prompt || "I can see you've uploaded an image. Please describe what you see in the image or tell me what specific questions you have about it, and I'll do my best to help you with your studies.";
+                    await callGroqAPI(fallbackPrompt, systemInstruction, temperature);
+                    return;
+                }
+            } else {
+                await callGroqAPI(prompt, systemInstruction, temperature);
+            }
         };
 
         // Image handling functions
         const handleImageUpload = (event) => {
             const file = event.target.files[0];
             if (file && file.type.startsWith('image/')) {
+                // Check file size (limit to 20MB for API compatibility)
+                if (file.size > 20 * 1024 * 1024) {
+                    alert('Image size too large. Please choose an image smaller than 20MB.');
+                    return;
+                }
+                
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     currentImage = {
@@ -1428,6 +1396,59 @@
         const convertImageToBase64 = (imageData) => {
             // Remove data URL prefix if present
             return imageData.split(',')[1] || imageData;
+        };
+        
+        // Function to analyze image using OpenRouter with Grok vision model
+        const analyzeImageWithOpenRouter = async (userPrompt, image) => {
+            try {
+                const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${config.OPENROUTER_API_KEY || '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'}`,
+                        'Content-Type': 'application/json',
+                        'HTTP-Referer': window.location.origin,
+                        'X-Title': 'AI Study Assistant'
+                    },
+                    body: JSON.stringify({
+                        model: config.OPENROUTER_VISION_MODEL || "google/gemini-flash-1.5",
+                        messages: [
+                            {
+                                role: "system",
+                                content: "You are an AI Study Assistant. Analyze the uploaded image and provide helpful, educational responses. Focus on explaining concepts, solving problems, or answering questions about the content in the image."
+                            },
+                            {
+                                role: "user",
+                                content: [
+                                    {
+                                        type: "text",
+                                        text: userPrompt || "Please analyze this image and help me understand what I'm looking at. Explain any concepts, problems, or educational content you can see."
+                                    },
+                                    {
+                                        type: "image_url",
+                                        image_url: {
+                                            url: image.data
+                                        }
+                                    }
+                                ]
+                            }
+                        ],
+                        max_tokens: 2000,
+                        temperature: 0.7
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    return data.choices[0].message.content;
+                } else {
+                    const errorText = await response.text();
+                    console.error(`OpenRouter API error: ${response.status}`, errorText);
+                    throw new Error(`OpenRouter API error: ${response.status}`);
+                }
+            } catch (error) {
+                console.error('OpenRouter API error:', error);
+                return null;
+            }
         };
 
         // Event Listeners
