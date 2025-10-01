@@ -703,7 +703,7 @@
                 SUPABASE_KEY: '',
                 GROQ_API_KEYS: [],
                 OPENROUTER_API_KEY: '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',
-                OPENROUTER_VISION_MODEL: 'google/gemini-flash-1.5',
+                OPENROUTER_VISION_MODEL: 'x-ai/grok-vision-beta',
                 MODEL_NAME: "openai/gpt-oss-120b",
                 DEFAULT_TEMPERATURE: 0.7,
                 MAX_CHAT_HISTORY: 10,
@@ -731,7 +731,7 @@
                 SUPABASE_KEY: '',
                 GROQ_API_KEYS: [],
                 OPENROUTER_API_KEY: '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',
-                OPENROUTER_VISION_MODEL: 'google/gemini-flash-1.5',
+                OPENROUTER_VISION_MODEL: 'x-ai/grok-vision-beta',
                 MODEL_NAME: "openai/gpt-oss-120b",
                 DEFAULT_TEMPERATURE: 0.7,
                 MAX_CHAT_HISTORY: 10,
@@ -1410,7 +1410,7 @@
                         'X-Title': 'AI Study Assistant'
                     },
                     body: JSON.stringify({
-                        model: config.OPENROUTER_VISION_MODEL || "google/gemini-flash-1.5",
+                        model: config.OPENROUTER_VISION_MODEL || "x-ai/grok-vision-beta",
                         messages: [
                             {
                                 role: "system",

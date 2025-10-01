@@ -43,7 +43,7 @@ const injectEnvIntoHtml = (htmlContent) => {
         SUPABASE_KEY: '${process.env.SUPABASE_KEY || ''}',
         GROQ_API_KEYS: '${process.env.GROQ_API_KEYS || ''}'.split(',').filter(key => key.trim().length > 0),
         OPENROUTER_API_KEY: '${process.env.OPENROUTER_API_KEY || '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'}',
-        OPENROUTER_VISION_MODEL: '${process.env.OPENROUTER_VISION_MODEL || 'google/gemini-flash-1.5'}',
+        OPENROUTER_VISION_MODEL: '${process.env.OPENROUTER_VISION_MODEL || 'x-ai/grok-vision-beta'}',
         MODEL_NAME: '${process.env.MODEL_NAME || 'openai/gpt-oss-120b'}',
         DEFAULT_TEMPERATURE: parseFloat('${process.env.DEFAULT_TEMPERATURE || '0.7'}'),
         MAX_CHAT_HISTORY: parseInt('${process.env.MAX_CHAT_HISTORY || '10'}', 10),
