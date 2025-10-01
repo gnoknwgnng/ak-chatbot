@@ -345,16 +345,46 @@
         
         /* Mobile responsive fixes */
         @media (max-width: 768px) {
+            body {
+                height: 100vh;
+                overflow: hidden;
+            }
+            
+            .notebook-container {
+                height: 100vh;
+                display: flex;
+                flex-direction: column;
+            }
+            
             .sidebar {
                 width: 100%;
-                height: calc(100% - 120px);
+                height: calc(100vh - 120px);
                 top: 120px;
             }
             
+            .main-content {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                height: calc(100vh - 60px);
+                margin-top: 60px;
+                min-height: 0;
+            }
+            
+            .chat-container {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+                min-height: 0;
+            }
+            
             .user-info {
+                flex-shrink: 0;
                 flex-direction: column;
                 align-items: stretch;
                 text-align: center;
+                padding: 1rem 0.5rem;
             }
             
             .user-info h1 {
@@ -368,8 +398,22 @@
                 gap: 1rem;
             }
             
+            .chat-history-container {
+                flex: 1;
+                min-height: 0;
+                overflow-y: auto;
+                margin-bottom: 0;
+            }
+            
+            #chat-history {
+                padding: 10px;
+                min-height: 100px;
+            }
+            
             .options-section {
+                flex-shrink: 0;
                 padding: 0.5rem;
+                margin-bottom: 0.5rem;
             }
             
             .options-grid {
@@ -383,29 +427,28 @@
                 font-size: 0.9rem;
             }
             
-            #chat-history {
-                padding: 10px;
-                min-height: 150px;
-                flex: 1;
-            }
-            
             .text-area {
                 font-size: 1rem;
                 padding: 0.75rem;
-                min-height: 1.5rem;
+                min-height: 2.5rem;
+                max-height: 100px;
             }
             
             .input-container {
-                padding: 0.5rem;
-                space-x-2: space-x-1; /* Reduce spacing on mobile */
+                flex-shrink: 0;
+                padding: 0.75rem 0.5rem;
+                background-color: white;
+                border-top: 2px solid #e2e8f0;
                 position: sticky;
                 bottom: 0;
-                top: auto;
+                z-index: 20;
+                box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
             }
             
             .send-button {
-                padding: 0.5rem;
-                min-width: 40px; /* Ensure button is visible */
+                padding: 0.75rem;
+                min-width: 44px;
+                min-height: 44px;
             }
             
             .welcome-message {
@@ -429,17 +472,31 @@
             }
             
             .text-area {
-                padding: 0.5rem;
+                padding: 0.75rem;
                 font-size: 0.9rem;
+                min-height: 2.5rem;
             }
             
             .send-button {
-                padding: 0.4rem;
-                min-width: 36px;
+                padding: 0.75rem;
+                min-width: 44px;
+                min-height: 44px;
             }
             
             .input-container {
-                padding: 0.25rem;
+                padding: 0.75rem 0.5rem;
+                background-color: white;
+                border-top: 2px solid #e2e8f0;
+                box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            }
+            
+            .user-info {
+                padding: 0.75rem 0.5rem;
+            }
+            
+            .options-section {
+                padding: 0.5rem;
+                margin-bottom: 0.5rem;
             }
         }
     </style>
