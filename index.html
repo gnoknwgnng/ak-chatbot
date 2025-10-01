@@ -321,6 +321,34 @@
             display: none;
         }
         
+        /* Image upload styles */
+        .image-preview-container {
+            background-color: #f9fafb;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        .image-message {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .image-message img {
+            max-width: 200px;
+            max-height: 200px;
+            object-fit: contain;
+            border-radius: 0.5rem;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .image-upload-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .image-upload-btn:hover {
+            transform: translateY(-1px);
+        }
+        
         /* Loading overlay */
         .loading-overlay {
             position: fixed;
@@ -456,6 +484,12 @@
                 min-height: 44px;
             }
             
+            #image-upload-btn {
+                min-width: 44px;
+                min-height: 44px;
+                padding: 0.75rem;
+            }
+            
             .welcome-message {
                 padding: 1rem;
             }
@@ -483,6 +517,12 @@
             }
             
             .send-button {
+                padding: 0.75rem;
+                min-width: 44px;
+                min-height: 44px;
+            }
+            
+            #image-upload-btn {
                 padding: 0.75rem;
                 min-width: 44px;
                 min-height: 44px;
@@ -617,9 +657,28 @@
                     </div>
                 </div>
 
+                <!-- Image Preview Area -->
+                <div id="image-preview-container" class="hidden p-4 bg-gray-50 border-t border-gray-200">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-700">Image attached:</span>
+                        <button id="remove-image-btn" class="text-red-500 hover:text-red-700 text-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    <img id="image-preview" class="max-w-full h-32 object-contain rounded-lg border" alt="Preview">
+                </div>
+
                 <!-- Input and Send Button - Back at the bottom -->
                 <div class="flex items-center space-x-2 p-4 input-container">
-                    <textarea id="user-input" rows="1" class="text-area flex-grow p-3 sm:p-4 rounded-lg border-2 border-gray-300 focus:border-gray-500 transition-colors" placeholder="Type your message..."></textarea>
+                    <input type="file" id="image-input" accept="image/*" class="hidden">
+                    <button id="image-upload-btn" class="bg-gray-500 text-white p-2 sm:p-3 rounded-lg shadow-lg hover:bg-gray-600 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </button>
+                    <textarea id="user-input" rows="1" class="text-area flex-grow p-3 sm:p-4 rounded-lg border-2 border-gray-300 focus:border-gray-500 transition-colors" placeholder="Type your message or ask about the image..."></textarea>
                     <button id="send-btn" class="bg-[#a37d65] text-white p-2 sm:p-3 rounded-lg shadow-lg hover:bg-[#8e6b5a] transition-colors send-button">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 sm:w-6 sm:h-6">
                             <path d="M3.478 2.405a.75.75 0 01.087 1.254l5.346 5.346a.75.75 0 01-1.06 1.06L2.405 3.565a.75.75 0 011.06-1.06zM12.75 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM19.125 18.067a.75.75 0 011.061-.087l5.346-5.346a.75.75 0 011.06 1.06l-5.346 5.346a.75.75 0 01-.087-1.06zM3.478 21.595a.75.75 0 01.087-1.254l5.346-5.346a.75.75 0 011.06 1.06l-5.346 5.346a.75.75 0 01-1.06-1.06zM21.595 3.478a.75.75 0 01-1.254-.087l-5.346-5.346a.75.75 0 01-1.06 1.06l5.346 5.346a.75.75 0 01.087-1.06z" />
@@ -721,6 +780,13 @@
         const mobileDirectAnswerBtn = document.getElementById('mobile-direct-answer-btn');
         const mobileEasyModeToggle = document.getElementById('mobile-easy-mode-toggle');
         const mobileClearChatBtn = document.getElementById('mobile-clear-chat-btn');
+        
+        // Image upload elements
+        const imageInput = document.getElementById('image-input');
+        const imageUploadBtn = document.getElementById('image-upload-btn');
+        const imagePreviewContainer = document.getElementById('image-preview-container');
+        const imagePreview = document.getElementById('image-preview');
+        const removeImageBtn = document.getElementById('remove-image-btn');
 
         // State variables
         let supabase = null;
@@ -729,6 +795,7 @@
         let currentConversationId = null;
         let chatHistory = [];
         let isFetching = false;
+        let currentImage = null;
         
         // Function to get current API key
         const getCurrentApiKey = () => {
@@ -1009,7 +1076,7 @@
         };
         
         // Call this function when needed
-        const createMessageBubble = (text, sender) => {
+        const createMessageBubble = (text, sender, image = null) => {
             // Remove welcome message if it exists
             const welcomeMessage = chatHistoryEl.querySelector('.welcome-message');
             if (welcomeMessage) {
@@ -1017,7 +1084,6 @@
             }
             
             const bubble = document.createElement('div');
-            bubble.textContent = text;
             bubble.classList.add('message-bubble', 'mb-2');
 
             if (sender === 'user') {
@@ -1026,6 +1092,33 @@
                 bubble.classList.add('ai-message');
             }
             
+            // Create content container
+            const contentContainer = document.createElement('div');
+            if (image) {
+                contentContainer.classList.add('image-message');
+                
+                // Add image
+                const img = document.createElement('img');
+                img.src = image.data;
+                img.alt = image.name || 'Uploaded image';
+                img.style.maxWidth = '200px';
+                img.style.maxHeight = '200px';
+                img.style.objectFit = 'contain';
+                img.style.borderRadius = '0.5rem';
+                img.style.border = '1px solid #e5e7eb';
+                contentContainer.appendChild(img);
+                
+                // Add text if present
+                if (text) {
+                    const textDiv = document.createElement('div');
+                    textDiv.textContent = text;
+                    contentContainer.appendChild(textDiv);
+                }
+            } else {
+                contentContainer.textContent = text;
+            }
+            
+            bubble.appendChild(contentContainer);
             chatHistoryEl.appendChild(bubble);
             scrollToBottom();
             
@@ -1082,7 +1175,7 @@
             }
         };
 
-        const callGroqAPI = async (userPrompt, systemInstruction, temperature) => {
+        const callGroqAPI = async (userPrompt, systemInstruction, temperature, image = null) => {
             if (isFetching) return;
             if (!config.GROQ_API_KEYS || config.GROQ_API_KEYS.length === 0) {
                 createMessageBubble('API key not configured. Please set up your Groq API keys.', 'assistant');
@@ -1110,20 +1203,42 @@
                     });
                 });
                 
-                // Add current user prompt
-                messages.push({ role: 'user', content: userPrompt });
+                // Add current user prompt with optional image
+                const userMessage = { role: 'user', content: userPrompt };
+                
+                // Add image if present (for vision models)
+                if (image) {
+                    userMessage.content = [
+                        {
+                            type: "text",
+                            text: userPrompt
+                        },
+                        {
+                            type: "image_url",
+                            image_url: {
+                                url: image.data
+                            }
+                        }
+                    ];
+                }
+                
+                messages.push(userMessage);
                 
                 // Configure API request
                 const payload = {
                     messages: messages,
-                    model: config.MODEL_NAME,
+                    model: image ? 'llama-3.2-11b-vision-preview' : config.MODEL_NAME,
                     temperature: temperature,
                     max_completion_tokens: config.MAX_COMPLETION_TOKENS,
                     top_p: 1,
                     stream: false,
-                    reasoning_effort: "medium",
                     stop: null
                 };
+                
+                // Add reasoning_effort only for non-vision models
+                if (!image) {
+                    payload.reasoning_effort = "medium";
+                }
 
                 const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                     method: 'POST',
@@ -1184,16 +1299,31 @@
 
         const sendMessage = async (mode = 'normal') => {
             const prompt = userInputEl.value.trim();
-            if (prompt === '') return;
+            if (prompt === '' && !currentImage) return;
             
             const responseLength = lengthSelectEl.value;
             const isEasyMode = easyModeToggle.getAttribute('data-active') === 'true';
             
+            // Create message object
+            const messageData = { 
+                sender: 'user', 
+                text: prompt || 'What can you tell me about this image?'
+            };
+            
+            // Add image data if present
+            if (currentImage) {
+                messageData.image = currentImage;
+            }
+            
             // Add user message to history
-            chatHistory.push({ sender: 'user', text: prompt });
-            createMessageBubble(prompt, 'user');
+            chatHistory.push(messageData);
+            createMessageBubble(messageData.text, 'user', currentImage);
             await saveChatHistory();
             userInputEl.value = '';
+            
+            // Clear image after sending
+            const imageToSend = currentImage;
+            removeImage();
 
             let systemInstruction = config.systemInstructions.base;
             let temperature = config.DEFAULT_TEMPERATURE;
@@ -1222,7 +1352,42 @@
                     break;
             }
 
-            await callGroqAPI(prompt, systemInstruction, temperature);
+            await callGroqAPI(prompt || 'What can you tell me about this image?', systemInstruction, temperature, imageToSend);
+        };
+
+        // Image handling functions
+        const handleImageUpload = (event) => {
+            const file = event.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    currentImage = {
+                        data: e.target.result,
+                        name: file.name,
+                        type: file.type
+                    };
+                    showImagePreview(e.target.result);
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+        
+        const showImagePreview = (imageSrc) => {
+            imagePreview.src = imageSrc;
+            imagePreviewContainer.classList.remove('hidden');
+            userInputEl.placeholder = 'Ask a question about this image...';
+        };
+        
+        const removeImage = () => {
+            currentImage = null;
+            imagePreviewContainer.classList.add('hidden');
+            imageInput.value = '';
+            userInputEl.placeholder = 'Type your message...';
+        };
+        
+        const convertImageToBase64 = (imageData) => {
+            // Remove data URL prefix if present
+            return imageData.split(',')[1] || imageData;
         };
 
         // Event Listeners
@@ -1292,6 +1457,14 @@
         if (mobileClearChatBtn) mobileClearChatBtn.addEventListener('click', async () => {
             await clearChatHistory();
         });
+        
+        // Image upload event listeners
+        if (imageUploadBtn) imageUploadBtn.addEventListener('click', () => {
+            imageInput.click();
+        });
+        
+        if (imageInput) imageInput.addEventListener('change', handleImageUpload);
+        if (removeImageBtn) removeImageBtn.addEventListener('click', removeImage);
 
         // Mobile-specific enhancements
         const handleMobileLayout = () => {
