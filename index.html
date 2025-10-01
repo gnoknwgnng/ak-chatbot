@@ -1420,7 +1420,7 @@
             
             try {
                 const payload = {
-                    model: "x-ai/grok-vision-beta",
+                    model: "openai/gpt-4o-mini",
                     messages: [
                         {
                             role: "user",
@@ -1470,7 +1470,7 @@
                         console.log('🔄 Trying with Google Gemini Flash...');
                         const fallbackPayload = {
                             ...payload,
-                            model: "google/gemini-flash-1.5"
+                            model: "google/gemini-flash-1.5-8b"
                         };
                         
                         const fallbackResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
