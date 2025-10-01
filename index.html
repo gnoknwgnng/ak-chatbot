@@ -1227,7 +1227,7 @@
                 // Configure API request
                 const payload = {
                     messages: messages,
-                    model: image ? 'llama-3.2-11b-vision-preview' : config.MODEL_NAME,
+                    model: image ? 'llava-v1.5-7b-4096-preview' : config.MODEL_NAME,
                     temperature: temperature,
                     max_completion_tokens: config.MAX_COMPLETION_TOKENS,
                     top_p: 1,
@@ -1250,6 +1250,46 @@
                 });
 
                 if (!response.ok) {
+                    // If vision model fails, try with text-only model
+                    if (image && response.status === 400) {
+                        console.log('Vision model failed, trying with text-only model');
+                        // Retry without image
+                        const textOnlyMessages = messages.map(msg => {
+                            if (msg.role === 'user' && Array.isArray(msg.content)) {
+                                return {
+                                    ...msg,
+                                    content: msg.content.find(c => c.type === 'text')?.text || userPrompt
+                                };
+                            }
+                            return msg;
+                        });
+                        
+                        const textOnlyPayload = {
+                            ...payload,
+                            model: config.MODEL_NAME,
+                            messages: textOnlyMessages,
+                            reasoning_effort: "medium"
+                        };
+                        
+                        const textResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${getCurrentApiKey()}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(textOnlyPayload)
+                        });
+                        
+                        if (textResponse.ok) {
+                            const textData = await textResponse.json();
+                            const assistantMessage = textData.choices[0].message.content;
+                            chatHistory.push({ sender: 'assistant', text: "I can see you've uploaded an image, but I'm currently unable to analyze images. However, I can help you with any text-based questions you have about your studies. " + assistantMessage });
+                            createMessageBubble("I can see you've uploaded an image, but I'm currently unable to analyze images. However, I can help you with any text-based questions you have about your studies. " + assistantMessage, 'assistant');
+                            await saveChatHistory();
+                            return;
+                        }
+                    }
+                    
                     // If we get an error, try switching to the next API key
                     if (response.status === 429) { // Rate limit error
                         switchToNextApiKey();
